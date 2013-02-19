@@ -79,14 +79,68 @@ public class Neo4jPreparedStatement extends AbstractPreparedStatement
     @Override
     public boolean execute() throws SQLException
     {
-        resultSet = connection.executeQuery(query, parameters);
+
+        int matches[] = new int[1000];
+        int matchCount = 0;
+
+        Pattern pattern = Pattern.compile("((('(\\\\'|[^'])*')|(\"(\\\\\"|[^\"])*\"))|[^?])*([?])((('(\\\\'|[^'])*')|(\"(\\\\\"|[^\"])*\"))|[^?])*");
+        int group = 7;
+
+        String source = query;
+        String converted = "";
+
+        Matcher matcher = pattern.matcher(source);
+
+        while (matcher.find()) {
+            int groupStart = matcher.start(group);
+            matches[matchCount++] = matcher.start(group);
+        }
+
+        int oldend = 0;
+        for (int i = 0; i < matchCount; i++) {
+            int start = matches[i];
+            converted += source.substring(oldend, start);
+            converted += "{" + Integer.toString(i + 1) + "}";
+            oldend = matches[i] + 1;
+        }
+        converted += source.substring(oldend);
+
+        resultSet = connection.executeQuery(converted, parameters);
+
         return true;
     }
 
     @Override
     public int executeUpdate() throws SQLException
     {
-        resultSet = connection.executeQuery(query, parameters);
+
+        int matches[] = new int[1000];
+        int matchCount = 0;
+
+        Pattern pattern = Pattern.compile("((('(\\\\'|[^'])*')|(\"(\\\\\"|[^\"])*\"))|[^?])*([?])((('(\\\\'|[^'])*')|(\"(\\\\\"|[^\"])*\"))|[^?])*");
+        int group = 7;
+
+        String source = query;
+        String converted = "";
+
+        Matcher matcher = pattern.matcher(source);
+
+        while (matcher.find()) {
+            int groupStart = matcher.start(group);
+            matches[matchCount++] = matcher.start(group);
+        }
+
+        int oldend = 0;
+        for (int i = 0; i < matchCount; i++) {
+            int start = matches[i];
+            converted += source.substring(oldend, start);
+            converted += "{" + Integer.toString(i + 1) + "}";
+            oldend = matches[i] + 1;
+        }
+        converted += source.substring(oldend);
+
+        resultSet = connection.executeQuery(converted, parameters);
+
         while (resultSet.next());
         return 0; // todo
     }
